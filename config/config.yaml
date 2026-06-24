@@ -1,0 +1,16 @@
+extensions:
+  - jpg
+  - jpeg
+  - png
+  - mp4
+  - mov
+  - mpg
+  - wmv
+  - avi
+  - 3gp
+inputFolders:
+  - path: data/input
+    max_depth: 1
+outputFolder:
+  base_path: "data/output"
+  template: "{YYYY}/{MM}"
