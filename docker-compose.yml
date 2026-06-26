@@ -1,0 +1,16 @@
+services:
+  exiftree:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: exiftree:latest
+    environment:
+      # Custom path for the configuration file
+      - EXIFTREE_CONFIG_FILE=/config/config.yaml
+    volumes:
+      # Mount configuration file
+      - ./config/config.yaml:/config/config.yaml:ro
+      # Mount input directories (matching default config.yaml paths)
+      - ./data/input:/app/data/input
+      # Mount output directory
+      - ./data/output:/app/data/output

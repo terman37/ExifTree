@@ -1,5 +1,6 @@
 import os
 
+from typing import ClassVar, Literal
 from pydantic import BaseModel
 from pydantic_settings import (
     BaseSettings,
@@ -13,6 +14,17 @@ ENV_CONF_PATH = "EXIFTREE_CONFIG_FILE"
 DEFAULT_CONF_PATH = "./config/config.yaml"
 
 
+class Global(BaseModel):
+    log_level: str = "info"
+    dry_run: bool = False
+
+
+class FileFilters(BaseModel):
+    min_width: int = 0
+    min_height: int = 0
+    extensions: list[str]
+
+
 class InputFolder(BaseModel):
     path: str
     max_depth: int
@@ -24,18 +36,18 @@ class OutputFolder(BaseModel):
 
 
 class Config(BaseSettings):
-    model_config: SettingsConfigDict = SettingsConfigDict(
+    model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_prefix="EXIFTREE_",
         env_nested_delimiter="_",
         nested_model_default_partial_update=True,
     )
 
-    log_level: str = "info"
-    dry_run: bool = False
+    global_settings: Global
+    file_filters: FileFilters
+    action: Literal["copy", "move"] = "copy"
 
-    inputFolders: list[InputFolder]
-    outputFolder: OutputFolder
-    extensions: list[str]
+    input_folders: list[InputFolder]
+    output_folder: OutputFolder
 
     @classmethod
     def settings_customise_sources(
