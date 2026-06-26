@@ -1,15 +1,17 @@
+from logging import Logger
 import logging
+
 from exiftree.config import Config
-from exiftree.path_resolver import resolve_target_paths
-from exiftree.scanner import scan_directory
 from exiftree.operations import (
     copy_files,
     move_files,
     preview_copy_files,
     preview_move_files,
 )
+from exiftree.path_resolver import resolve_target_paths
+from exiftree.scanner import scan_directory
 
-logger = logging.getLogger(__name__)
+logger: Logger = logging.getLogger(name=__name__)
 
 
 def main() -> None:
@@ -28,7 +30,7 @@ def main() -> None:
     input_files: list[str] = []
     for folder in conf.input_folders:
         logger.info("Scanning folder: %s (max_depth: %d)", folder.path, folder.max_depth)
-        found = scan_directory(folder=folder.path, extensions=conf.file_filters.extensions, max_depth=folder.max_depth)
+        found: list[str] = scan_directory(folder=folder.path, extensions=conf.file_filters.extensions, max_depth=folder.max_depth)
         logger.info("Found %d matching files in %s", len(found), folder.path)
         input_files += found
 

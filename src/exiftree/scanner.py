@@ -21,10 +21,7 @@ def scan_directory(folder: str, extensions: list[str], max_depth: int = 1) -> li
                 for entry in entries:
                     if entry.is_file() and pattern.search(entry.name):
                         matched_files.append(entry.path)
-                    elif (
-                        entry.is_dir(follow_symlinks=False)
-                        and current_depth < max_depth
-                    ):
+                    elif entry.is_dir(follow_symlinks=False) and current_depth < max_depth:
                         stack.append((entry.path, current_depth + 1))
         except PermissionError:
             logger.warning("Permission denied accessing directory: %s", current_dir)

@@ -2,7 +2,7 @@ from logging import Logger
 import logging
 import os
 
-import exiftool  # type: ignore[import-untyped]
+import exiftool
 from pydantic import BaseModel, Field
 
 from exiftree.media_date import MediaDate
@@ -55,8 +55,8 @@ def resolve_target_paths(
             if image_size:
                 try:
                     width_str, height_str = image_size.split(" ")
-                    width = int(width_str)
-                    height = int(height_str)
+                    width: int = int(width_str)
+                    height: int = int(height_str)
                     if width < min_width or height < min_height:
                         logger.info(
                             "Skipping file %s: image size %dx%d is below minimum threshold %dx%d",
@@ -81,8 +81,8 @@ def resolve_target_paths(
                 )
                 continue
 
-        quicktime_date = metadata.quicktime_create_date
-        exif_date = metadata.exif_datetime_original
+        quicktime_date: str | None = metadata.quicktime_create_date
+        exif_date: str | None = metadata.exif_datetime_original
 
         if quicktime_date:
             file_date = quicktime_date
@@ -91,7 +91,7 @@ def resolve_target_paths(
         else:
             file_date = None
 
-        media_date = MediaDate(date_str=file_date)
+        media_date: MediaDate = MediaDate(date_str=file_date)
         if media_date.date:
             # Format targets using template keys (year, month, day)
             output[file] = os.path.join(

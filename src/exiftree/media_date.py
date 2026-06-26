@@ -1,12 +1,15 @@
 from datetime import datetime
+from logging import Logger
 import logging
+from re import Match, Pattern
 import re
+
 import dateutil.parser
 
-logger = logging.getLogger(__name__)
+logger: Logger = logging.getLogger(name=__name__)
 
 # Pattern to identify traditional EXIF date representation (e.g., "YYYY:MM:DD HH:MM:SS")
-EXIF_DATE_PATTERN = re.compile(r"^(\d{4}):(\d{2}):(\d{2})")
+EXIF_DATE_PATTERN: Pattern[str] = re.compile(r"^(\d{4}):(\d{2}):(\d{2})")
 
 
 class MediaDate:
@@ -19,7 +22,7 @@ class MediaDate:
             return None
 
         # Standardize EXIF colons (2026:06:24 14:00:00 -> 2026-06-24 14:00:00)
-        match = EXIF_DATE_PATTERN.match(self.date_str)
+        match: Match[str] | None = EXIF_DATE_PATTERN.match(self.date_str)
         if match:
             # Replace only the colons separating YYYY, MM, and DD
             normalized_date = f"{match.group(1)}-{match.group(2)}-{match.group(3)}{self.date_str[10:]}"

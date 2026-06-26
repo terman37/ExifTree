@@ -1,8 +1,9 @@
+from logging import Logger
 import logging
 import os
 import shutil
 
-logger = logging.getLogger(__name__)
+logger: Logger = logging.getLogger(name=__name__)
 
 
 def copy_files(targets: dict[str, str]) -> None:

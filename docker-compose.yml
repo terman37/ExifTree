@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        CRON_SCHEDULE: "*/1 * * * *"
     image: exiftree:latest
     environment:
       # Custom path for the configuration file
