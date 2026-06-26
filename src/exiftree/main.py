@@ -40,6 +40,7 @@ def main() -> None:
         min_height=conf.file_filters.min_height,
         dry_run=conf.global_settings.dry_run,
         action=conf.action,
+        drop_duplicates=conf.output_folder.drop_duplicates,
     )
 
     logger.info("Processing complete")
