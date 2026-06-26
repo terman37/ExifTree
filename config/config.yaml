@@ -1,6 +1,6 @@
 global_settings:
   log_level: INFO
-  dry_run: true
+  dry_run: false
 
 file_filters:
   min_height: 600
@@ -16,13 +16,14 @@ file_filters:
     - avi
     - 3gp
 
-action: move
+action: copy
 
 input_folders:
   - path: data/input
     max_depth: 1
 
 output_folder:
-  base_path: "data/output"
   # Allowed template vars: year, month, day
-  template: "{year}/{month}"
+  base_path_template: "data/output/{year}/{month}"
+  unknown_path_template: "data/output/unknown"
+  duplicates_path_template: "data/output/duplicates/{year}/{month}"

@@ -6,6 +6,7 @@ import exiftool
 from pydantic import BaseModel, Field
 
 from exiftree.media_date import MediaDate
+from exiftree.operations import deduplicate, operate_file
 
 logger: Logger = logging.getLogger(name=__name__)
 
@@ -26,10 +27,13 @@ class ExifToolMissingError(Exception):
 def resolve_target_paths(
     files_path: list[str],
     base_path: str,
-    template: str,
+    unknown_path: str,
+    duplicates_path: str,
+    dry_run: bool,
+    action: str,
     min_width: int = 0,
     min_height: int = 0,
-) -> dict[str, str]:
+) -> None:
 
     # Get file metadata
     try:
@@ -93,15 +97,11 @@ def resolve_target_paths(
 
         media_date: MediaDate = MediaDate(date_str=file_date)
         if media_date.date:
-            # Format targets using template keys (year, month, day)
-            output[file] = os.path.join(
-                base_path,
-                template.format(year=media_date.year, month=media_date.month, day=media_date.day),
-            )
+            dest = base_path.format(year=media_date.year, month=media_date.month, day=media_date.day)
+            dupl_dest = duplicates_path.format(year=media_date.year, month=media_date.month, day=media_date.day)
+            dest = deduplicate(file, dest, dupl_dest, action)
         else:
             logger.warning("No creation date found for file: %s. Outputting to 'Unknown'", file)
-            output[file] = os.path.join(base_path, "Unknown")
+            dest = os.path.join(unknown_path.format(year=media_date.year, month=media_date.month, day=media_date.day), os.path.basename(file))
 
-        output[file] = os.path.join(output[file], os.path.basename(file))
-
-    return output
+        operate_file(file, dest, action, dry_run)

@@ -31,8 +31,9 @@ class InputFolder(BaseModel):
 
 
 class OutputFolder(BaseModel):
-    base_path: str
-    template: str
+    base_path_template: str
+    unknown_path_template: str
+    duplicates_path_template: str
 
 
 class Config(BaseSettings):

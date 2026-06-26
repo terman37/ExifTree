@@ -2,12 +2,6 @@ from logging import Logger
 import logging
 
 from exiftree.config import Config
-from exiftree.operations import (
-    copy_files,
-    move_files,
-    preview_copy_files,
-    preview_move_files,
-)
 from exiftree.path_resolver import resolve_target_paths
 from exiftree.scanner import scan_directory
 
@@ -37,25 +31,16 @@ def main() -> None:
     logger.info("Total files to process: %d", len(input_files))
 
     # Define output path target for each file
-    targets: dict[str, str] = resolve_target_paths(
+    resolve_target_paths(
         files_path=input_files,
-        base_path=conf.output_folder.base_path,
-        template=conf.output_folder.template,
+        base_path=conf.output_folder.base_path_template,
+        unknown_path=conf.output_folder.unknown_path_template,
+        duplicates_path=conf.output_folder.duplicates_path_template,
         min_width=conf.file_filters.min_width,
         min_height=conf.file_filters.min_height,
+        dry_run=conf.global_settings.dry_run,
+        action=conf.action,
     )
-
-    # Perform file operations
-    if conf.global_settings.dry_run:
-        if conf.action == "move":
-            preview_move_files(targets=targets)
-        else:
-            preview_copy_files(targets=targets)
-    else:
-        if conf.action == "move":
-            move_files(targets=targets)
-        else:
-            copy_files(targets=targets)
 
     logger.info("Processing complete")
 
