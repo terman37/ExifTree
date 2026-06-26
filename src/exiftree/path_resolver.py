@@ -31,6 +31,7 @@ def resolve_target_paths(
     duplicates_path: str,
     dry_run: bool,
     action: str,
+    drop_duplicates: bool,
     min_width: int = 0,
     min_height: int = 0,
 ) -> None:
@@ -99,7 +100,7 @@ def resolve_target_paths(
         if media_date.date:
             dest = base_path.format(year=media_date.year, month=media_date.month, day=media_date.day)
             dupl_dest = duplicates_path.format(year=media_date.year, month=media_date.month, day=media_date.day)
-            dest = deduplicate(file, dest, dupl_dest, action)
+            dest = deduplicate(file, dest, dupl_dest, action, drop_duplicates)
         else:
             logger.warning("No creation date found for file: %s. Outputting to 'Unknown'", file)
             dest = os.path.join(unknown_path.format(year=media_date.year, month=media_date.month, day=media_date.day), os.path.basename(file))

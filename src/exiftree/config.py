@@ -34,6 +34,7 @@ class OutputFolder(BaseModel):
     base_path_template: str
     unknown_path_template: str
     duplicates_path_template: str
+    drop_duplicates: bool = False
 
 
 class Config(BaseSettings):

@@ -28,7 +28,7 @@ def operate_file(src, dest, action, dry_run) -> None:
                 logger.error("Failed to %s %s to %s: %s", action, src, dest, e)
 
 
-def deduplicate(src: str, dest: str, duplicates_path: str, action: str) -> str | None:
+def deduplicate(src: str, dest: str, duplicates_path: str, action: str, drop_duplicates: bool) -> str | None:
     file: str = os.path.basename(src)
     destination: str = os.path.join(dest, file)
 
@@ -65,9 +65,13 @@ def deduplicate(src: str, dest: str, duplicates_path: str, action: str) -> str |
                 return None
 
             # For move, put it in duplicate folder
-            duplicate_dest = os.path.join(duplicates_path, os.path.basename(current_dest))
-            logger.info("Exact same file found at (%s). Routing to duplicates: %s", current_dest, duplicate_dest)
-            return duplicate_dest
+            if drop_duplicates:
+                os.remove(src)
+                return None
+            else:
+                duplicate_dest = os.path.join(duplicates_path, os.path.basename(current_dest))
+                logger.info("Exact same file found at (%s). Routing to duplicates: %s", current_dest, duplicate_dest)
+                return duplicate_dest
 
         # File exists but content is different, increment suffix
         if version is None:
