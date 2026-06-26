@@ -31,17 +31,18 @@ def main() -> None:
     logger.info("Total files to process: %d", len(input_files))
 
     # Define output path target for each file
-    resolve_target_paths(
-        files_path=input_files,
-        base_path=conf.output_folder.base_path_template,
-        unknown_path=conf.output_folder.unknown_path_template,
-        duplicates_path=conf.output_folder.duplicates_path_template,
-        min_width=conf.file_filters.min_width,
-        min_height=conf.file_filters.min_height,
-        dry_run=conf.global_settings.dry_run,
-        action=conf.action,
-        drop_duplicates=conf.output_folder.drop_duplicates,
-    )
+    if len(input_files) > 0:
+        resolve_target_paths(
+            files_path=input_files,
+            base_path=conf.output_folder.base_path_template,
+            unknown_path=conf.output_folder.unknown_path_template,
+            duplicates_path=conf.output_folder.duplicates_path_template,
+            min_width=conf.file_filters.min_width,
+            min_height=conf.file_filters.min_height,
+            dry_run=conf.global_settings.dry_run,
+            action=conf.action,
+            drop_duplicates=conf.output_folder.drop_duplicates,
+        )
 
     logger.info("Processing complete")
 
