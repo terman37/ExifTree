@@ -13,4 +13,5 @@ inputFolders:
     max_depth: 1
 outputFolder:
   base_path: "data/output"
-  template: "{YYYY}/{MM}"
+  # Allowed template vars YYYY, MM, DD
+  template: "{YYYY}/{MM}/{DD}"

@@ -4,19 +4,7 @@ import os
 import dateutil.parser
 import exiftool
 
-
-def string_to_datetime(raw_date_string) -> datetime | None:
-
-    # + filter impossible dates
-    if raw_date_string is None:
-        return None
-
-    # Standardize EXIF colons (2026:06:24 -> 2026-06-24)
-    if raw_date_string[4] == ":" and raw_date_string[7] == ":":
-        raw_date_string = raw_date_string[:4] + "-" + raw_date_string[5:7] + "-" + raw_date_string[8:]
-
-    # Returns a standard Python datetime object
-    return dateutil.parser.parse(raw_date_string)
+from exiftree.dates import MediaDate
 
 
 def define_output(files_path, base_path, template) -> dict[str, str]:
@@ -30,20 +18,22 @@ def define_output(files_path, base_path, template) -> dict[str, str]:
         file: str = f.get("SourceFile")
         imageSize: str = f.get("Composite:ImageSize")
 
-        quickTimeDate: datetime | None = string_to_datetime(f.get("QuickTime:CreateDate"))
-        exifDate: datetime | None = string_to_datetime(f.get("EXIF:DateTimeOriginal"))
-        fileDate = None
+        quickTimeDate = f.get("QuickTime:CreateDate")
+        exifDate = f.get("EXIF:DateTimeOriginal")
+
         if quickTimeDate:
             fileDate = quickTimeDate
         elif exifDate:
             fileDate = exifDate
+        else:
+            fileDate = None
 
-        if fileDate is not None:
-            YYYY: str = f"{fileDate.year:04d}"
-            MM: str = f"{fileDate.month:02d}"
-            DD: str = f"{fileDate.day:02d}"
-
-            output[file] = os.path.join(base_path, template.format(YYYY=YYYY, MM=MM, DD=DD))
+        MediaFile: MediaDate = MediaDate(dateStr=fileDate)
+        if MediaFile.date:
+            output[file] = os.path.join(base_path, template.format(YYYY=MediaFile.YYYY, MM=MediaFile.MM, DD=MediaFile.DD))
         else:
             output[file] = os.path.join(base_path, "Unknown")
+
+        output[file] = os.path.join(output[file], os.path.basename(file))
+
     return output

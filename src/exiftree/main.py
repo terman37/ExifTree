@@ -5,13 +5,10 @@ from exiftree import define_output
 from exiftree.config import Config
 from exiftree.find_files import find_files
 from exiftree.define_output import define_output
+from exiftree.move_files import move_files
 
 
 def main():
-    print("Hello from exiftree!")
-
-
-if __name__ == "__main__":
     # Read config
     conf: Config = Config()  # pyright: ignore[reportCallIssue]
 
@@ -24,5 +21,8 @@ if __name__ == "__main__":
     targets: dict[str, str] = define_output(input_files, conf.outputFolder.base_path, conf.outputFolder.template)
 
     # Move files
+    move_files(targets=targets)
 
+
+if __name__ == "__main__":
     main()
