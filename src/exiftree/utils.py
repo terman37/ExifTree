@@ -1,31 +1,40 @@
 from ntpath import isfile
-from re import Match
+from re import Match, Pattern
 
 
 import filecmp
 from logging import Logger
 import logging
 import os
-import shutil
 import re
 
 logger: Logger = logging.getLogger(name=__name__)
 
 
-def operate_file(src, dest, action, dry_run) -> None:
-    if dest:
-        if dry_run:
-            logger.info("[DRY RUN] Would %s file: %s -> %s", action, src, dest)
-        else:
-            logger.info("%s file: %s -> %s", action, src, dest)
-            try:
-                os.makedirs(name=os.path.dirname(dest), exist_ok=True)
-                if action == "copy":
-                    shutil.copy2(src, dst=dest)
-                elif action == "move":
-                    shutil.move(src, dst=dest)
-            except OSError as e:
-                logger.error("Failed to %s %s to %s: %s", action, src, dest, e)
+def scan_directory(folder: str, extensions: list[str], max_depth: int = 1) -> list[str]:
+    regex_patterns: list[str] = [rf".*\.{e}$" for e in extensions]
+    pattern: Pattern[str] = re.compile("|".join(regex_patterns), re.IGNORECASE)
+    matched_files: list[str] = []
+
+    stack: list[tuple[str, int]] = [(os.path.abspath(folder), 0)]
+
+    while stack:
+        current_dir, current_depth = stack.pop()
+        try:
+            with os.scandir(current_dir) as entries:
+                for entry in entries:
+                    if entry.is_file() and pattern.search(entry.name):
+                        matched_files.append(entry.path)
+                    elif entry.is_dir(follow_symlinks=False) and current_depth < max_depth:
+                        stack.append((entry.path, current_depth + 1))
+        except PermissionError:
+            logger.warning("  - Permission denied accessing directory: %s", current_dir)
+            continue
+        except (FileNotFoundError, NotADirectoryError):
+            logger.warning("  - Directory not found or is not a directory: %s", current_dir)
+            continue
+
+    return matched_files
 
 
 def deduplicate(src: str, dest: str, duplicates_path: str, action: str, drop_duplicates: bool) -> str | None:
@@ -55,13 +64,13 @@ def deduplicate(src: str, dest: str, duplicates_path: str, action: str, drop_dup
         # File doesn't exist
         if not os.path.isfile(current_dest):
             if current_dest != destination:
-                logger.info("New destination determined: %s", current_dest)
+                logger.debug("  - File already exists, update to: %s", candidate_name)
             return current_dest
 
         # File Exists, Check if it's the same
         if filecmp.cmp(src, current_dest, shallow=False):
             if action == "copy":
-                logger.info("Exact same file already exists at (%s). Skipping.", current_dest)
+                logger.debug("  ! Skipping file: Exact same file already exists at (%s). ", current_dest)
                 return None
 
             # For move, put it in duplicate folder
@@ -70,7 +79,7 @@ def deduplicate(src: str, dest: str, duplicates_path: str, action: str, drop_dup
                 return None
             else:
                 duplicate_dest = os.path.join(duplicates_path, os.path.basename(current_dest))
-                logger.info("Exact same file found at (%s). Routing to duplicates: %s", current_dest, duplicate_dest)
+                logger.debug("  - Exact same file found at (%s). Routing to duplicates: %s", current_dest, duplicate_dest)
                 return duplicate_dest
 
         # File exists but content is different, increment suffix

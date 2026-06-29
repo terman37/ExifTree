@@ -13,9 +13,6 @@ WORKDIR /app
 # Enable bytecode compilation
 ENV UV_COMPILE_BYTECODE=1
 
-# defaults to every 5 minutes
-ARG CRON_SCHEDULE="*/5 * * * *"
-
 # Copy dependency configuration files
 COPY pyproject.toml uv.lock README.md ./
 
@@ -29,12 +26,14 @@ COPY config/ ./config
 # Sync the project itself
 RUN uv sync --frozen
 
+# defaults to every 5 minutes
+ARG CRON_SCHEDULE="*/5 * * * *"
+
 # Create the cron job directly inside the Dockerfile
-# CHANGE: We direct output directly to /proc/1/fd/1 (Docker's stdout) and /proc/1/fd/2 (Docker's stderr)
+# Redirect output directly to /proc/1/fd/1 (Docker's stdout) and /proc/1/fd/2 (Docker's stderr)
 RUN echo "${CRON_SCHEDULE} . /etc/environment; cd /app && uv run --project /app python -m exiftree.main > /proc/1/fd/1 2> /proc/1/fd/2\n" > /etc/cron.d/exiftree-cron \
     && chmod 0644 /etc/cron.d/exiftree-cron \
     && crontab /etc/cron.d/exiftree-cron
 
-# FIX: Ensure runtime env vars (like EXIFTREE_CONFIG_FILE) are captured right at startup,
-# then run cron in the foreground.
+# Show env vars (like EXIFTREE_CONFIG_FILE) then run cron in the foreground.
 CMD ["/bin/sh", "-c", "printenv | grep -v 'no_proxy' > /etc/environment && exec cron -f"]

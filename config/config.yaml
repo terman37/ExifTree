@@ -1,6 +1,6 @@
 global_settings:
   log_level: INFO
-  dry_run: false
+  dry_run: true
 
 file_filters:
   min_height: 600
