@@ -4,5 +4,25 @@
     "*.csv": "duckdb.dataFileViewer",
     "*.tsv": "duckdb.dataFileViewer",
     "*.xlsx": "duckdb.dataFileViewer"
-  }
+  },
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#633a4a",
+    "activityBar.background": "#633a4a",
+    "activityBar.foreground": "#e7e7e7",
+    "activityBar.inactiveForeground": "#e7e7e799",
+    "activityBarBadge.background": "#000000",
+    "activityBarBadge.foreground": "#e7e7e7",
+    "commandCenter.border": "#e7e7e799",
+    "sash.hoverBorder": "#633a4a",
+    "statusBar.background": "#432732",
+    "statusBar.foreground": "#e7e7e7",
+    "statusBarItem.hoverBackground": "#633a4a",
+    "statusBarItem.remoteBackground": "#432732",
+    "statusBarItem.remoteForeground": "#e7e7e7",
+    "titleBar.activeBackground": "#432732",
+    "titleBar.activeForeground": "#e7e7e7",
+    "titleBar.inactiveBackground": "#43273299",
+    "titleBar.inactiveForeground": "#e7e7e799"
+  },
+  "peacock.color": "#432732"
 }
