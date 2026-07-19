@@ -1,23 +1,29 @@
-# ExifTree
+# ExifTree 📷
 
-ExifTree is a tool to organize photos and videos into a structured folder hierarchy (e.g. `YYYY/MM/DD`) based on EXIF and QuickTime creation dates.
+ExifTree is a command-line tool that automatically organizes photos and videos into a structured folder hierarchy based on their EXIF and QuickTime metadata. Perfect for managing large photo libraries with automatic date-based organization.
 
-## Features
+## ✨ Features
 
-- **Metadata-Driven Organization:** Automatically reads creation dates from EXIF metadata (`EXIF:DateTimeOriginal`) and QuickTime metadata (`QuickTime:CreateDate`).
-- **Flexible File Actions:** Supports both copying (`copy`) and moving (`move`) operations.
-- **Dry-Run Safety:** Validate and preview operations before writing any files.
-- **Resolution Filtering:** Automatically skip images below a minimum width and height threshold.
-- **Recursive Scanning:** Scan multiple input directories with configurable search depths.
-- **Docker Ready:** Outputs structured logs designed for containerized environments.
+- **Metadata-Driven Organization:** Reads creation dates from EXIF metadata (`EXIF:DateTimeOriginal`) and QuickTime metadata (`QuickTime:CreateDate`), organizing files by year/month/day
+- **Flexible File Actions:** Supports both `copy` and `move` operations
+- **Dry-Run Safety:** Preview all operations before executing them—perfect for testing configurations
+- **Intelligent Filtering:** 
+  - Resolution filtering (skip images below size thresholds)
+  - File extension filtering
+  - Multiple destination paths for organized/unknown/duplicate files
+- **Recursive Scanning:** Scan multiple input directories with configurable depth
+- **Docker Ready:** Fully containerized with Docker and Docker Compose support
 
 ---
 
-## Prerequisites
+## 📋 Prerequisites
 
-ExifTree relies on the `exiftool` command-line application to extract file metadata.
+### System Requirements
 
-### Installation
+- **Python 3.13+** (for local development)
+- **exiftool** (required for all metadata extraction)
+
+### Installing exiftool
 
 - **Ubuntu/Debian:**
   ```bash
@@ -27,84 +33,142 @@ ExifTree relies on the `exiftool` command-line application to extract file metad
   ```bash
   brew install exiftool
   ```
+- **Windows:** Download from [exiftool.org](https://exiftool.org) or use `choco install exiftool`
 
 ---
 
-## Configuration
+## ⚙️ Configuration
 
-ExifTree reads its default settings from `./config/config.yaml`. You can specify a different configuration file path using the `EXIFTREE_CONFIG_FILE` environment variable.
+ExifTree reads settings from `./config/config.yaml` on startup. You can override the config file location using the `EXIFTREE_CONFIG_FILE` environment variable.
 
 ### Configuration Structure (`config.yaml`)
 
 ```yaml
-# Directories to scan for files
+# Global operational settings
+global_settings:
+  log_level: INFO          # Logging level: DEBUG, INFO, WARNING, ERROR
+  dry_run: true            # If true, preview operations without executing
+
+# File action: "copy" or "move"
+action: copy
+
+# Input directories to scan
 input_folders:
   - path: data/input
-    max_depth: 1
+    max_depth: 1           # Recursion depth (1 = direct children only)
 
-# Destination directory and path template details
+# Output folder configuration with template variables
 output_folder:
-  base_path: "data/output"
-  # Available template variables: {year}, {month}, {day}
-  template: "{year}/{month}/{day}"
+  base_path_template: "data/output/{year}/{month}"    # Main organized path
+  unknown_path_template: "data/output/unknown"         # Files with no date metadata
+  duplicates_path_template: "data/output/duplicates/{year}/{month}"  # Duplicate files
 
-# Operational options
-global_settings:
-  log_level: "info"     # logging level (debug, info, warning, error)
-  dry_run: false        # if true, log operations without executing them
-
-action: "copy"          # "copy" or "move"
-
+# File filtering options
 file_filters:
-  # Image size filter (0 to disable)
-  min_width: 0
-  min_height: 0
-  # List of file extensions to scan (case-insensitive)
-  extensions:
+  min_width: 600           # Minimum image width (0 to disable)
+  min_height: 600          # Minimum image height (0 to disable)
+  extensions:              # File extensions to process (case-insensitive)
     - jpg
     - jpeg
     - png
     - mp4
     - mov
+    - mpg
+    - wmv
+    - avi
+    - 3gp
 ```
+
+### Template Variables
+
+Use the following variables in path templates:
+- `{year}` — 4-digit year (e.g., 2024)
+- `{month}` — 2-digit month (e.g., 06)
+- `{day}` — 2-digit day (e.g., 15)
 
 ---
 
-## Usage
+## 🚀 Quick Start
 
-ExifTree is developed using Python 3.13 and managed via `uv`.
+### 1. Setup (Local Development)
 
-### Running Locally
+Clone the repository and install dependencies:
 
-To run ExifTree with the configuration file:
+```bash
+git clone https://github.com/yourusername/ExifTree.git
+cd ExifTree
+uv sync
+```
+
+### 2. Configure
+
+Edit `./config/config.yaml` to set your input/output directories and preferences.
+
+### 3. Run (Dry-Run First!)
+
+Always test with dry-run enabled before executing:
+
 ```bash
 uv run python -m exiftree.main
 ```
 
-### CLI Overrides
+Once you've verified the output, disable `dry_run: true` in your config or override via CLI:
 
-All settings in `config.yaml` can be overridden directly from the command line:
-
-- **Run a dry-run move simulation:**
-  ```bash
-  uv run python -m exiftree.main --dry_run true --action move
-  ```
-- **Set a minimum dimension filter:**
-  ```bash
-  uv run python -m exiftree.main --min_width 1920 --min_height 1080
-  ```
-- **Review CLI options:**
-  ```bash
-  uv run python -m exiftree.main --help
-  ```
+```bash
+uv run python -m exiftree.main --dry_run false
+```
 
 ---
 
-## Docker Execution
+## 📖 Usage
+
+### Basic Command
+
+```bash
+uv run python -m exiftree.main
+```
+
+This runs ExifTree with settings from `./config/config.yaml`.
+
+### Command-Line Overrides
+
+Override any config setting directly from the CLI:
+
+```bash
+# Test with dry-run before executing
+uv run python -m exiftree.main --dry_run true
+
+# Switch to move instead of copy
+uv run python -m exiftree.main --action move
+
+# Apply strict resolution filtering
+uv run python -m exiftree.main --min_width 1920 --min_height 1080
+
+# Increase logging verbosity
+uv run python -m exiftree.main --log_level DEBUG
+```
+
+### Help
+
+View all available options:
+
+```bash
+uv run python -m exiftree.main --help
+```
+
+---
+
+## 🐳 Docker Execution
+
+### Build the Image
+
+```bash
+docker build -t exiftree:latest .
+```
 
 ### Using Docker Run
 
-To run ExifTree inside a Docker container, map your input, output, and configuration files into the container volumes:
+Map your photos, output, and config into the container:
 
 ```bash
 docker run --rm \
@@ -114,13 +178,70 @@ docker run --rm \
   exiftree:latest
 ```
 
-### Using Docker Compose
+### Using Docker Compose (Recommended)
 
-Alternatively, you can build and run ExifTree using Docker Compose:
+Simplest approach—just prepare your files and run:
 
-1. Place your input files in `./data/input/`.
-2. Run the compose service:
+1. Place input photos in `./data/input/`
+2. Run the service:
    ```bash
+   docker compose build
    docker compose run --rm exiftree
    ```
+
+Output will be organized in `./data/output/`.
+
+---
+
+## 📁 Project Structure
+
+```
+ExifTree/
+├── README.md                    # This file
+├── pyproject.toml              # Python project metadata
+├── uv.lock                     # Dependency lock file
+├── Dockerfile                  # Docker image definition
+├── docker-compose.yml          # Docker Compose configuration
+├── config/
+│   └── config.yaml             # Main configuration file
+├── data/
+│   ├── input/                  # Photos to be organized (source)
+│   └── output/                 # Organized output directory
+└── src/exiftree/
+    ├── main.py                 # Application entry point
+    ├── config.py               # Configuration parsing (Pydantic)
+    ├── media.py                # Media file metadata handling
+    ├── process_files.py        # Core file processing logic
+    └── utils.py                # Utility functions
+```
+
+---
+
+## 🔍 How It Works
+
+1. **Scan** — Recursively scans input directories for media files
+2. **Filter** — Applies extension and resolution filters
+3. **Extract Metadata** — Reads creation dates using `exiftool`
+4. **Organize** — Determines destination path based on date and templates
+5. **Execute** — Copies or moves files (or previews in dry-run mode)
+6. **Report** — Logs operations and handles errors intelligently
+
+---
+
+## 🛠️ Development
+
+### Running Tests
+
+```bash
+uv run pytest
+```
+
+### Code Quality
+
+Project uses `ruff` for linting and `mypy` for type checking:
+
+```bash
+uvrun ruff check src/
+uv run mypy src/
+```
 
