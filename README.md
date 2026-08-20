@@ -48,7 +48,7 @@ ExifTree reads settings from `./config/config.yaml` on startup. You can override
 global_settings:
   log_level: INFO          # Logging level: DEBUG, INFO, WARNING, ERROR
   dry_run: true            # If true, preview operations without executing
-  write_metadata_from_filename: false  # If true, write filename-derived date into file metadata
+  write_metadata_from_filename: false  # If true, write filename-derived date into file metadata (EXIF + local timezone offset, QuickTime for videos) and set file timestamps
 
 # File action: "copy" or "move"
 action: copy
@@ -173,6 +173,7 @@ Map your photos, output, and config into the container:
 
 ```bash
 docker run --rm \
+  -e TZ=Europe/Paris \  # required for correct timezone offset in metadata
   -v $(pwd)/config/config.yaml:/app/config/config.yaml \
   -v /path/to/my/photos:/data/input \
   -v /path/to/sorted/photos:/data/output \

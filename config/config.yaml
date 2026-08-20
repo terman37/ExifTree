@@ -1,7 +1,7 @@
 global_settings:
   log_level: INFO
   dry_run: true
-  write_metadata_from_filename: false
+  write_metadata_from_filename: true  # write filename-derived date into file metadata (EXIF + local timezone offset, QuickTime for videos) and set file timestamps
 
 file_filters:
   min_height: 600

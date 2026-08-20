@@ -56,16 +56,21 @@ def process_files(
                 continue
 
         # Inject the filename-derived date into the file itself
-        if config.global_settings.write_metadata_from_filename:
-            tags: dict[str, str] | None = media.write_tags
-            if tags:
-                if config.global_settings.dry_run:
-                    logger.info(
-                        "  > [DRY RUN] Would write metadata %s to %s",
-                        tags,
-                        media.file,
-                    )
-                else:
+        if (
+            config.global_settings.write_metadata_from_filename
+            and media.date_from_filename
+            and media.date is not None
+        ):
+            tags: dict[str, str] = media.write_tags
+            timestamp: float = media.date.timestamp()
+            if config.global_settings.dry_run:
+                logger.info(
+                    "  > [DRY RUN] Would write metadata %s and set file timestamps to %s",
+                    tags,
+                    media.file,
+                )
+            else:
+                if tags:
                     try:
                         et.set_tags(media.file, tags)
                     except ExifToolExecuteError as e:
@@ -75,6 +80,16 @@ def process_files(
                             media.file,
                             e,
                         )
+                try:
+                    # Linux cannot set birthtime/ctime; mtime is what Immich's
+                    # date fallback reads (stats.mtime)
+                    os.utime(media.file, (timestamp, timestamp))
+                except OSError as e:
+                    logger.error(
+                        "  - Failed to set file timestamps on %s: %s",
+                        media.file,
+                        e,
+                    )
 
         # Define destination Path
         if media.date:

@@ -113,7 +113,25 @@ class Media:
             return None
         if self.extension in VIDEO_EXTENSIONS:
             return {"QuickTime:CreateDate": self.date.strftime("%Y-%m-%d %H:%M:%S")}
-        return {"EXIF:DateTimeOriginal": self.date.strftime("%Y:%m:%d %H:%M:%S")}
+        offset: str = self._local_offset_str(self.date)
+        tags: dict[str, str] = {"EXIF:DateTimeOriginal": self.date.strftime("%Y:%m:%d %H:%M:%S")}
+        if offset:
+            # Keeps Immich from treating the naive date as UTC, which would shift
+            # the day for negative-offset timezones
+            tags["EXIF:OffsetTimeOriginal"] = offset
+            tags["EXIF:OffsetTimeDigitized"] = offset
+        return tags
+
+    @staticmethod
+    def _local_offset_str(date: datetime) -> str:
+        """System-local UTC offset (e.g. +02:00) for the given date, DST-aware."""
+        offset = date.astimezone().utcoffset()
+        if offset is None:
+            return ""
+        total: int = int(offset.total_seconds())
+        sign: str = "+" if total >= 0 else "-"
+        total = abs(total)
+        return f"{sign}{total // 3600:02d}:{total % 3600 // 60:02d}"
 
     def render_path(self, path) -> str:
         return path.format(year=self.year, month=self.month, day=self.day)
