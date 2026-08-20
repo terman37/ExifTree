@@ -48,6 +48,7 @@ ExifTree reads settings from `./config/config.yaml` on startup. You can override
 global_settings:
   log_level: INFO          # Logging level: DEBUG, INFO, WARNING, ERROR
   dry_run: true            # If true, preview operations without executing
+  write_metadata_from_filename: false  # If true, write filename-derived date into file metadata
 
 # File action: "copy" or "move"
 action: copy

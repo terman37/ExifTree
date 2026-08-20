@@ -19,6 +19,12 @@ EXIF_DATE_PATTERN: Pattern[str] = re.compile(r"^(\d{4}):(\d{2}):(\d{2})")
 # Pattern to find a date in a file name (e.g., "2026-06-24", "20260624", "2026_06_24")
 FILENAME_DATE_PATTERN: Pattern[str] = re.compile(r"(?<!\d)(\d{4})[-_.]?(\d{2})[-_.]?(\d{2})(?!\d)")
 
+# Extensions whose date tag lives in QuickTime metadata rather than EXIF
+VIDEO_EXTENSIONS: set[str] = {
+    "mp4", "mov", "m4v", "mpg", "mpeg", "wmv", "avi", "3gp",
+    "mkv", "webm", "mts", "m2ts", "ts",
+}
+
 
 class FileMetadata(BaseModel):
     source_file: str = Field(alias="SourceFile")
@@ -34,19 +40,21 @@ class Media:
         # Validate raw dictionaries into structured models
         metadata: FileMetadata = FileMetadata.model_validate(raw_metadata)
 
+        self.date_from_filename: bool = False  # set by find_date
         self.date_str: str | None = self.find_date(metadata)
         self.date: datetime | None = self.string_to_datetime()
         self.file = metadata.source_file
+        self.extension: str = os.path.splitext(metadata.source_file)[1].lstrip(".").lower()
         self.width, self.height = self.get_size(metadata.image_size)
 
     def find_date(self, metadata) -> str | None:
-        file_date: str | None = None
-        if metadata.quicktime_create_date:
-            file_date = metadata.quicktime_create_date
-        elif metadata.exif_datetime_original:
-            file_date = metadata.exif_datetime_original
-        if not file_date or file_date == "0000:00:00 00:00:00":
-            file_date = self.find_date_in_filename(metadata.source_file)
+        self.date_from_filename = False
+        for candidate in (metadata.quicktime_create_date, metadata.exif_datetime_original):
+            if candidate and candidate != "0000:00:00 00:00:00":
+                return candidate
+        file_date: str | None = self.find_date_in_filename(metadata.source_file)
+        if file_date:
+            self.date_from_filename = True
         return file_date
 
     def find_date_in_filename(self, file_path: str) -> str | None:
@@ -97,6 +105,15 @@ class Media:
         except (ValueError, TypeError) as e:
             logger.warning("  - Failed to parse date string '%s': %s", self.date_str, e)
             return None
+
+    @property
+    def write_tags(self) -> dict[str, str] | None:
+        """Tags to inject into the file when the date came from its name only."""
+        if not self.date_from_filename or self.date is None:
+            return None
+        if self.extension in VIDEO_EXTENSIONS:
+            return {"QuickTime:CreateDate": self.date.strftime("%Y-%m-%d %H:%M:%S")}
+        return {"EXIF:DateTimeOriginal": self.date.strftime("%Y:%m:%d %H:%M:%S")}
 
     def render_path(self, path) -> str:
         return path.format(year=self.year, month=self.month, day=self.day)

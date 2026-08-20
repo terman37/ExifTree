@@ -4,6 +4,7 @@ import os
 import shutil
 
 import exiftool
+from exiftool.exceptions import ExifToolExecuteError
 
 from exiftree.config import Config
 from exiftree.media import Media
@@ -53,6 +54,27 @@ def process_files(
                     config.file_filters.min_height,
                 )
                 continue
+
+        # Inject the filename-derived date into the file itself
+        if config.global_settings.write_metadata_from_filename:
+            tags: dict[str, str] | None = media.write_tags
+            if tags:
+                if config.global_settings.dry_run:
+                    logger.info(
+                        "  > [DRY RUN] Would write metadata %s to %s",
+                        tags,
+                        media.file,
+                    )
+                else:
+                    try:
+                        et.set_tags(media.file, tags)
+                    except ExifToolExecuteError as e:
+                        logger.error(
+                            "  - Failed to write metadata %s to %s: %s",
+                            tags,
+                            media.file,
+                            e,
+                        )
 
         # Define destination Path
         if media.date:

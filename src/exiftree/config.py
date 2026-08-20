@@ -17,6 +17,7 @@ DEFAULT_CONF_PATH = "./config/config.yaml"
 class Global(BaseModel):
     log_level: str = "info"
     dry_run: bool = False
+    write_metadata_from_filename: bool = False
 
 
 class FileFilters(BaseModel):
