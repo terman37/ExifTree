@@ -4,6 +4,7 @@ from typing import Literal
 from datetime import datetime
 from logging import Logger
 import logging
+import os
 from re import Match, Pattern
 import re
 
@@ -14,6 +15,9 @@ logger: Logger = logging.getLogger(name=__name__)
 
 # Pattern to identify traditional EXIF date representation (e.g., "YYYY:MM:DD HH:MM:SS")
 EXIF_DATE_PATTERN: Pattern[str] = re.compile(r"^(\d{4}):(\d{2}):(\d{2})")
+
+# Pattern to find a date in a file name (e.g., "2026-06-24", "20260624", "2026_06_24")
+FILENAME_DATE_PATTERN: Pattern[str] = re.compile(r"(?<!\d)(\d{4})[-_.]?(\d{2})[-_.]?(\d{2})(?!\d)")
 
 
 class FileMetadata(BaseModel):
@@ -41,7 +45,27 @@ class Media:
             file_date = metadata.quicktime_create_date
         elif metadata.exif_datetime_original:
             file_date = metadata.exif_datetime_original
+        if not file_date or file_date == "0000:00:00 00:00:00":
+            file_date = self.find_date_in_filename(metadata.source_file)
         return file_date
+
+    def find_date_in_filename(self, file_path: str) -> str | None:
+        """Extract a date from the file name when metadata carries none."""
+        file_name: str = os.path.basename(file_path)
+        today = datetime.now().date()
+        for match in FILENAME_DATE_PATTERN.finditer(file_name):
+            try:
+                date = datetime(
+                    year=int(match.group(1)),
+                    month=int(match.group(2)),
+                    day=int(match.group(3)),
+                ).date()
+            except ValueError:
+                continue  # e.g., month 13 or day 99: not a valid date
+            if date.year < 1979 or date > today:
+                continue  # not a plausible capture date
+            return f"{match.group(1)}-{match.group(2)}-{match.group(3)}"
+        return None
 
     def get_size(self, image_size) -> tuple[int, int]:
         try:
